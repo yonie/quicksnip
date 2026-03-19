@@ -43,7 +43,8 @@ pip install PyGObject
 ## Usage
 
 ```bash
-python3 quicksnip.py
+python3 quicksnip.py                      # Start empty, paste image later
+python3 quicksnip.py /path/to/image.png   # Open an image file directly
 ```
 
 ### Controls

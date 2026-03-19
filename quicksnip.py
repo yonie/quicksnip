@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import gi
+import sys
+import os
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
@@ -308,6 +310,30 @@ A minimal tool for annotating screenshots.
         self.update_zoomed_surface()
         return True
 
+    def load_from_file(self, filepath):
+        if not os.path.exists(filepath):
+            self.show_toast(f"Could not open {os.path.basename(filepath)}")
+            return False
+
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(filepath)
+        except Exception:
+            self.show_toast(f"Could not open {os.path.basename(filepath)}")
+            return False
+
+        width = pixbuf.get_width()
+        height = pixbuf.get_height()
+
+        self.undo_stack.clear()
+
+        self.original_surface = cairo.ImageSurface(cairo.Format.ARGB32, width, height)
+        cr = cairo.Context(self.original_surface)
+        Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
+        cr.paint()
+
+        self.fit_to_window()
+        return True
+
     def paste_image(self, widget):
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         pixbuf = clipboard.wait_for_image()
@@ -455,4 +481,9 @@ A minimal tool for annotating screenshots.
 
 if __name__ == "__main__":
     app = PaintApp()
+
+    if len(sys.argv) > 1:
+        filepath = sys.argv[1]
+        GLib.idle_add(lambda: app.load_from_file(filepath) or False)
+
     Gtk.main()

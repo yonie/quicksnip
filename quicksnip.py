@@ -414,12 +414,13 @@ A minimal tool for annotating screenshots.
             self.last_y = None
 
     def clear_canvas(self, widget):
+        if self.original_surface is not None:
+            self.save_undo_state()
         self.surface = None
         self.original_surface = None
         self.zoom_level = 1.0
         self.offset_x = 0.0
         self.offset_y = 0.0
-        self.undo_stack.clear()
         self.drawing_area.queue_draw()
 
     def save_image(self, widget):
@@ -484,6 +485,6 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         filepath = sys.argv[1]
-        GLib.idle_add(lambda: app.load_from_file(filepath) or False)
+        GLib.idle_add(lambda: (app.load_from_file(filepath), False)[1])
 
     Gtk.main()

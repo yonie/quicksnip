@@ -2,6 +2,8 @@
 
 A simple paint tool for GNOME/Linux to quickly annotate images from your clipboard.
 
+![QuickSnip Screenshot](screenshot.png)
+
 ## Features
 
 - Paste images from clipboard

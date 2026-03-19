@@ -321,10 +321,10 @@ A minimal tool for annotating screenshots.
             self.show_toast(f"Could not open {os.path.basename(filepath)}")
             return False
 
+        self.save_undo_state()
+
         width = pixbuf.get_width()
         height = pixbuf.get_height()
-
-        self.undo_stack.clear()
 
         self.original_surface = cairo.ImageSurface(cairo.Format.ARGB32, width, height)
         cr = cairo.Context(self.original_surface)
@@ -341,10 +341,10 @@ A minimal tool for annotating screenshots.
             self.show_toast("No image in clipboard")
             return
 
+        self.save_undo_state()
+
         width = pixbuf.get_width()
         height = pixbuf.get_height()
-
-        self.undo_stack.clear()
 
         self.original_surface = cairo.ImageSurface(cairo.Format.ARGB32, width, height)
         cr = cairo.Context(self.original_surface)

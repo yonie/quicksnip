@@ -124,14 +124,14 @@ class PaintApp:
         cr.set_source_surface(self.original_surface, 0, 0)
         cr.paint()
 
-        self.undo_stack.append(copy_surface)
+        self.undo_stack.append((copy_surface, self.zoom_level))
 
     def undo(self):
         if len(self.undo_stack) == 0:
             self.show_toast("Nothing to undo")
             return
 
-        self.original_surface = self.undo_stack.pop()
+        self.original_surface, self.zoom_level = self.undo_stack.pop()
         self.update_zoomed_surface()
         self.show_toast("↩ Undone")
 

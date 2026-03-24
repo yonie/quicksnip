@@ -9,7 +9,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 from collections import deque
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 MAX_UNDO_STEPS = 20
 
 
@@ -93,6 +93,8 @@ class PaintApp:
         self.toast_overlay.add_overlay(self.toast_label)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        vbox.set_margin_top(6)
+        vbox.set_margin_start(6)
         vbox.pack_start(hbox, False, False, 0)
         vbox.pack_start(self.scrolled_window, True, True, 0)
 

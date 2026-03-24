@@ -94,7 +94,9 @@ class PaintApp:
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         vbox.set_margin_top(6)
+        vbox.set_margin_bottom(6)
         vbox.set_margin_start(6)
+        vbox.set_margin_end(6)
         vbox.pack_start(hbox, False, False, 0)
         vbox.pack_start(self.scrolled_window, True, True, 0)
 

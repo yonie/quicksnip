@@ -17,7 +17,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cairo
+          sudo apt-get install -y libcairo2-dev libgirepository1.0-dev \
+            python3-gi gir1.2-gtk-3.0 python3-cairo
           pip install ruff PyGObject PyCairo
       - name: Ruff check
         run: ruff check quicksnip.py
@@ -34,7 +35,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cairo
+          sudo apt-get install -y libcairo2-dev libgirepository1.0-dev \
+            python3-gi gir1.2-gtk-3.0 python3-cairo
           pip install PyGObject PyCairo pytest
       - name: Run tests
         env:

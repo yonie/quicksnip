@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-import gi
-import sys
 import os
+import sys
+from collections import deque
+
+import cairo
+import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
-import cairo
-from collections import deque
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
 VERSION = "1.0.1"
 MAX_UNDO_STEPS = 20
@@ -32,6 +33,7 @@ class PaintApp:
             | Gdk.EventMask.BUTTON_RELEASE_MASK
             | Gdk.EventMask.POINTER_MOTION_MASK
             | Gdk.EventMask.SCROLL_MASK
+            | Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
 
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -113,6 +115,7 @@ class PaintApp:
         self.offset_x = 0.0
         self.offset_y = 0.0
         self.undo_stack = deque(maxlen=MAX_UNDO_STEPS)
+        self._toast_timer_id = None
 
         self.window.show_all()
 
@@ -169,11 +172,14 @@ class PaintApp:
         return False
 
     def show_toast(self, message):
+        if self._toast_timer_id is not None:
+            GLib.source_remove(self._toast_timer_id)
         self.toast_label.set_text(message)
         self.toast_label.show()
-        GLib.timeout_add(2000, self.hide_toast)
+        self._toast_timer_id = GLib.timeout_add(2000, self.hide_toast)
 
     def hide_toast(self):
+        self._toast_timer_id = None
         self.toast_label.hide()
         return False
 
@@ -230,26 +236,6 @@ A minimal tool for annotating screenshots.
 
         self.drawing_area.queue_draw()
 
-    def ensure_surface_size(self, width, height):
-        if self.surface is None:
-            return cairo.ImageSurface(cairo.Format.ARGB32, width, height)
-
-        old_width = self.surface.get_width()
-        old_height = self.surface.get_height()
-
-        if width <= old_width and height <= old_height:
-            return self.surface
-
-        new_width = max(width, old_width)
-        new_height = max(height, old_height)
-        new_surface = cairo.ImageSurface(cairo.Format.ARGB32, new_width, new_height)
-
-        cr = cairo.Context(new_surface)
-        cr.set_source_surface(self.surface, 0, 0)
-        cr.paint()
-
-        return new_surface
-
     def fit_to_window(self):
         if self.original_surface is None:
             return
@@ -299,12 +285,22 @@ A minimal tool for annotating screenshots.
 
         old_zoom = self.zoom_level
 
-        if event.direction == Gdk.ScrollDirection.UP:
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            _, delta_y = event.get_scroll_deltas()
+            if delta_y < 0:
+                self.zoom_level *= 1.1 ** abs(delta_y)
+            elif delta_y > 0:
+                self.zoom_level /= 1.1 ** abs(delta_y)
+                if self.zoom_level < 0.1:
+                    self.zoom_level = 0.1
+        elif event.direction == Gdk.ScrollDirection.UP:
             self.zoom_level *= 1.1
         elif event.direction == Gdk.ScrollDirection.DOWN:
             self.zoom_level /= 1.1
             if self.zoom_level < 0.1:
                 self.zoom_level = 0.1
+        else:
+            return False
 
         zoom_ratio = self.zoom_level / old_zoom
 
@@ -316,13 +312,13 @@ A minimal tool for annotating screenshots.
 
     def load_from_file(self, filepath):
         if not os.path.exists(filepath):
-            self.show_toast(f"Could not open {os.path.basename(filepath)}")
+            self.show_toast(f"File not found: {os.path.basename(filepath)}")
             return False
 
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(filepath)
-        except Exception:
-            self.show_toast(f"Could not open {os.path.basename(filepath)}")
+        except Exception as e:
+            self.show_toast(f"Cannot open {os.path.basename(filepath)}: {e}")
             return False
 
         self.save_undo_state()
@@ -443,52 +439,42 @@ A minimal tool for annotating screenshots.
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             filepath = file_chooser.get_filename()
-            self.original_surface.write_to_png(filepath)
+            try:
+                self.original_surface.write_to_png(filepath)
+                self.show_toast(f"Saved to {os.path.basename(filepath)}")
+            except Exception:
+                self.show_toast(f"Failed to save {os.path.basename(filepath)}")
         dialog.destroy()
 
     def copy_image(self, widget):
         if self.original_surface is None:
             return
 
-        width = self.original_surface.get_width()
-        height = self.original_surface.get_height()
-
-        stride = cairo.ImageSurface.format_stride_for_width(cairo.Format.ARGB32, width)
-        new_surface = cairo.ImageSurface(cairo.Format.ARGB32, width, height)
-
-        cr = cairo.Context(new_surface)
-        cr.set_source_surface(self.original_surface, 0, 0)
-        cr.paint()
-
-        new_surface.flush()
-
-        data = new_surface.get_data()
-        pixels = bytearray(data)
-
-        for i in range(0, len(pixels), 4):
-            r = pixels[i + 0]
-            g = pixels[i + 1]
-            b = pixels[i + 2]
-            a = pixels[i + 3]
-            pixels[i + 0] = b
-            pixels[i + 1] = g
-            pixels[i + 2] = r
-            pixels[i + 3] = a
-
-        pixbuf = GdkPixbuf.Pixbuf.new_from_data(
-            bytes(pixels), GdkPixbuf.Colorspace.RGB, True, 8, width, height, stride
+        pixbuf = Gdk.pixbuf_get_from_surface(
+            self.original_surface,
+            0,
+            0,
+            self.original_surface.get_width(),
+            self.original_surface.get_height(),
         )
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_image(pixbuf)
         self.show_toast("✓ Copied to clipboard!")
 
+    def _load_initial_file(self, filepath):
+        self.load_from_file(filepath)
+        return GLib.SOURCE_REMOVE
 
-if __name__ == "__main__":
+
+def main():
     app = PaintApp()
 
     if len(sys.argv) > 1:
-        filepath = sys.argv[1]
-        GLib.idle_add(lambda: (app.load_from_file(filepath), False)[1])
+        GLib.idle_add(app._load_initial_file, sys.argv[1])
 
     Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

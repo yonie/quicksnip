@@ -9,7 +9,7 @@ os.environ["GDK_BACKEND"] = "broadway"
 class TestVersion(unittest.TestCase):
     def test_version_is_set(self):
         module = importlib.import_module("quicksnip")
-        self.assertEqual(module.VERSION, "1.0.1")
+        self.assertEqual(module.VERSION, "1.0.2")
 
     def test_max_undo_steps(self):
         module = importlib.import_module("quicksnip")

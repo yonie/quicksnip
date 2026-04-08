@@ -4,7 +4,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "quicksnip"
-version = "1.0.1"
+version = "1.0.2"
 description = "A minimal GNOME/Linux paint tool for annotating screenshots"
 readme = "README.md"
 license = {text = "MIT"}

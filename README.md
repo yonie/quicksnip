@@ -14,14 +14,20 @@ A simple paint tool for GNOME/Linux to quickly annotate images from your clipboa
 
 ## Installation
 
-### Requirements
+### AppImage (easiest)
 
-- Python 3
-- PyGObject
-- GTK 3
-- cairo (PyCairo)
+Grab the `.AppImage` from the [latest release](https://github.com/yonie/quicksnip/releases/latest), make it executable, and run it:
 
-### Install dependencies
+```bash
+chmod +x QuickSnip-*.AppImage
+./QuickSnip-*.AppImage
+```
+
+No system packages or Python deps needed — everything is bundled.
+
+### Run from source
+
+If you'd rather run the script directly:
 
 ```bash
 # Fedora
@@ -32,11 +38,7 @@ sudo apt install python3-gi gir1.2-gtk-3.0 python3-cairo
 
 # Arch
 sudo pacman -S python-gobject gtk3 cairo
-```
 
-Install Python dependencies:
-
-```bash
 pip install PyGObject
 ```
 

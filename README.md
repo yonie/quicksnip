@@ -40,6 +40,33 @@ Install Python dependencies:
 pip install PyGObject
 ```
 
+### File manager integration (optional)
+
+To make QuickSnip show up in the "Open With" menu for image files in Files (Nautilus), save the following to `~/.local/share/applications/quicksnip.desktop`, replacing the two `/path/to/...` lines with wherever you cloned the repo:
+
+```ini
+[Desktop Entry]
+Name=QuickSnip
+Comment=Quickly annotate images from your clipboard
+Exec=/path/to/quicksnip.py %f
+Icon=/path/to/screenshot.png
+Terminal=false
+Type=Application
+Categories=Graphics;Utility;
+MimeType=image/png;image/jpeg;image/gif;image/bmp;image/webp;image/tiff;
+Keywords=Screenshot;Annotate;Paint;
+StartupNotify=true
+```
+
+Make the script executable and refresh the desktop database:
+
+```bash
+chmod +x /path/to/quicksnip.py
+update-desktop-database ~/.local/share/applications/
+```
+
+QuickSnip will then appear under "Open With Other Application" for common image types. This does **not** change the default image viewer.
+
 ## Usage
 
 ```bash
